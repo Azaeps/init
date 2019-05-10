@@ -1,0 +1,2 @@
+En session graphique il suffit de mettre son login et son mot de passe.
+En session ssh il faut faire la commande "ssh login@ip" puis mettre son mot de passe.
