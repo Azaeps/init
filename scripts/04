@@ -1,0 +1,54 @@
+#!/bin/bash
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+COLUMNS=$(tput cols)
+if [ $# = 1 ]
+	then
+		VAR=$(curl -s https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/$1?api_key=RGAPI-23ba2dea-287f-484b-8ad0-ac934a0fbe6a)
+		ID=$(echo $VAR | cut -d '"' -f4)
+		if [ $ID = "message" ]
+			then
+				echo "Summoner name invalid" | fmt -c -w $COLUMNS
+				echo "Please enter a valid Summoner name" | fmt -c -w $COLUMNS
+			else
+				SUM=$(curl -s https://euw1.api.riotgames.com/lol/league/v4/positions/by-summoner/$ID?api_key=RGAPI-23ba2dea-287f-484b-8ad0-ac934a0fbe6a | sed 's/",/\\n/g' | sed 's/"//g')
+				SUMLVL=$(echo $VAR | cut -d '"' -f23 | sed 's/://g' | sed 's/}//g')
+				R5=$(echo $SUM | grep -A6 "RANKED_SOLO")
+				RANK5=$(echo $R5 | cut -d ':' -f4 | sed 's/ rank//g')
+				RANK5DIV=$(echo $R5 | cut -d ':' -f5 | sed 's/ summonerId//g')
+				RANK5LP=$(echo $R5 | cut -d ':' -f8 | sed 's/,wins//g')
+				RANK5WIN=$(echo $R5 | cut -d ':' -f9 | sed 's/,losses//g')
+				RANK5LOS=$(echo $R5 | cut -d ':' -f10 | sed 's/,veteran//g')
+				FLEX=$(echo $SUM | grep -A6 "RANKED_FLEX_SR")
+				RANKFLEX=$(echo $FLEX | cut -d ':' -f4 | sed 's/ rank//g')
+				RANKFLEXDIV=$(echo $FLEX | cut -d ':' -f5 | sed 's/ summonerId//g')
+				RANKFLEXLP=$(echo $FLEX | cut -d ':' -f8 | sed 's/,wins//g')
+				RANKFLEXWIN=$(echo $FLEX | cut -d ':' -f9 | sed 's/,losses//g')
+				RANKFLEXLOS=$(echo $FLEX | cut -d ':' -f10 | sed 's/,veteran//g')
+				echo "Summoner Level: $SUMLVL" | fmt -c -w $COLUMNS
+				if [ "$R5" = "" ]
+					then
+						echo "$1 does not have a rank yet in SoloQ/DuoQ" | fmt -c -w $COLUMNS
+					else
+						echo "SoloQ/DuoQ:\n$1 is $RANK5 $RANK5DIV and has $RANK5LP LP with $RANK5WIN wins and $RANK5LOS losses" | fmt -c -w $COLUMNS
+				fi
+				if [ "$FLEX" = "" ]
+					then
+						echo "$1 does not have a rank yet in Flex" | fmt -c -w $COLUMNS
+					else
+						echo "Ranked Flex 5v5:\n$1 is $RANKFLEX $RANKFLEXDIV and has $RANKFLEXLP LP with $RANKFLEXWIN wins and $RANKFLEXLOS losses" | fmt -c -w $COLUMNS
+				fi
+				GAME=$(curl -s https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/$ID?api_key=RGAPI-23ba2dea-287f-484b-8ad0-ac934a0fbe6a | sed 's/",/\\n/g' | sed 's/"//g')
+				VERIF=$(echo $GAME | grep "message" | cut -d ':' -f2 | sed 's/{//g')
+				if [ "$VERIF" = "message" ]
+					then
+						echo "$1 is not actually in game" | fmt -c -w $COLUMNS
+					else
+						GAMETYPE=$(echo $GAME | grep "gameType" | cut -d ':' -f2 | sed 's/_/ /g')
+						echo "$1 is actually playing in $GAMETYPE" | fmt -c -w $COLUMNS
+				fi
+		fi
+	else
+		echo "Please type a summoner name" | fmt -c -w $COLUMNS
+fi

@@ -1,0 +1,23 @@
+if [ $# = 1 ]
+	then
+		VAR=$(curl -s https://api.twitch.tv/kraken/streams/$1?client_id=8tjnx272gikhemkvfodelhap9qpdli)
+		STREAM_OFF=$(echo $VAR | cut -d ',' -f 1 | cut -d ':' -f 2)
+		GAME=$(echo $VAR | cut -d '"' -f8 | sed 's/\\u0026/\&/g')
+		VIEWERS=$(echo $VAR | cut -d ',' -f 3 | cut -d ':' -f 2)
+		DESC=$(echo $VAR | cut -d '"' -f54)
+		FOLLOWS=$(echo $VAR | cut -d '"' -f119 | sed 's/://g' | sed 's/,//g')
+		VIEWS=$(echo $VAR | cut -d '"' -f117 | sed 's/://g' | sed 's/,//g')
+		URL=$(echo $VAR | cut -d '"' -f 114)
+		if [ $STREAM_OFF = null ]
+			then
+				echo "Ce streamer n'est pas en stream actuellement!"
+			else
+				echo "$1 est en stream et joue a $GAME!"
+				echo "\"$DESC\""
+				echo "Il a actuellement $VIEWERS viewers"
+				echo "Il possede $FOLLOWS followers et $VIEWS vues sur sa chaine"
+				echo "URL du stream: $URL"
+			fi
+	else
+		echo "Choisissez un streamer valide"
+	fi
