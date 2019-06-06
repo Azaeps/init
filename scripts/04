@@ -37,7 +37,7 @@ if [ $# = 1 ]
 						echo "$1 does not have a rank in SoloQ/DuoQ" | fmt -c -w $COLUMNS
 						echo "----"| fmt -c -w $COLUMNS
 					else
-						echo "SoloQ/DuoQ:\n$1 is $RANK5 $RANK5DIV and has $RANK5LP LP with $RANK5WIN wins and $RANK5LOS losses" | fmt -c -w $COLUMNS
+						echo "SoloQ/DuoQ:\n\n$1 is $RANK5 $RANK5DIV and has $RANK5LP LP with $RANK5WIN wins and $RANK5LOS losses" | fmt -c -w $COLUMNS
 						echo "----"| fmt -c -w $COLUMNS
 				fi
 				if [ "$FLEX" = "" ]
@@ -45,7 +45,7 @@ if [ $# = 1 ]
 						echo "$1 does not have a rank in Flex" | fmt -c -w $COLUMNS
 						echo "----"| fmt -c -w $COLUMNS
 					else
-						echo "Ranked Flex 5v5:\n$1 is $RANKFLEX $RANKFLEXDIV and has $RANKFLEXLP LP with $RANKFLEXWIN wins and $RANKFLEXLOS losses" | fmt -c -w $COLUMNS
+						echo "Ranked Flex 5v5:\n\n$1 is $RANKFLEX $RANKFLEXDIV and has $RANKFLEXLP LP with $RANKFLEXWIN wins and $RANKFLEXLOS losses" | fmt -c -w $COLUMNS
 						echo "----"| fmt -c -w $COLUMNS
 				fi
 				GAMEINFO=$(curl -s https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/$ID?api_key=RGAPI-0b007de9-e52b-469a-906e-92c15bd3a200)
@@ -78,18 +78,18 @@ if [ $# = 1 ]
 				echo "Match History" | fmt -c -w $COLUMNS
 				echo "----" | fmt -c -w $COLUMNS
 				x=3
-				nbrgames=1
+				nbrgames=0
 				GAMES=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/$ACCID?api_key=RGAPI-0b007de9-e52b-469a-906e-92c15bd3a200 | sed 's/,/\\n/g')
 				GAMESID=$(echo $GAMES | grep "gameId")
-#				while [ $nbrgames -ne 5 ]
-#					do
-						GAMEIDSSS=$(echo $GAMESID | cut -d '"' -f$x | sed 's/://g')
-						echo $GAMEIDSSS | cat -e
-						GAMEINFOS=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matches/$GAMEIDSSS?api_key=RGAPI-0b007de9-e52b-469a-906e-92c15bd3a200)
+				while [ $nbrgames -ne 5 ]
+					do
+						GAMEIDID=$(echo $GAMESID | cut -d '"' -f$x | sed 's/://g')
+						echo $GAMEIDID
+						GAMEINFOS=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matches/$GAMEIDID?api_key=RGAPI-0b007de9-e52b-469a-906e-92c15bd3a200)
 						echo $GAMEINFOS
-#						x=$(($x + 2))
-#						nbrgames=$(($nbrgames + 1))
-#				done
+						x=$(($x + 2))
+						nbrgames=$(($nbrgames + 1))
+				done
 		fi
 	else
 		echo "Please type a summoner name" | fmt -c -w $COLUMNS
