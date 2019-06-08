@@ -3,10 +3,11 @@ red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
 COLUMNS=$(tput cols)
+API_KEY="RGAPI-b14e72eb-47ab-4f34-b311-4495569c0398"
 if [ $# = 1 ]
 	then
 		NAME=$(echo $1 | sed 's/ /%20/g')
-		VAR=$(curl -s https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/$NAME?api_key=RGAPI-0b007de9-e52b-469a-906e-92c15bd3a200)
+		VAR=$(curl -s https://euw1.api.riotgames.com/lol/summoner/v4/summoners/by-name/$NAME?api_key=$API_KEY)
 		ID=$(echo $VAR | cut -d '"' -f4)
 		ACCID=$(echo $VAR | cut -d '"' -f8)
 		if [ $ID = "message" ]
@@ -15,7 +16,7 @@ if [ $# = 1 ]
 				echo "----"| fmt -c -w $COLUMNS
 				echo "Please enter a valid Summoner name" | fmt -c -w $COLUMNS
 			else
-				SUM=$(curl -s https://euw1.api.riotgames.com/lol/league/v4/positions/by-summoner/$ID?api_key=RGAPI-0b007de9-e52b-469a-906e-92c15bd3a200 | sed 's/",/\\n/g' | sed 's/"//g')
+				SUM=$(curl -s https://euw1.api.riotgames.com/lol/league/v4/positions/by-summoner/$ID?api_key=$API_KEY | sed 's/",/\\n/g' | sed 's/"//g')
 				SUMLVL=$(echo $VAR | cut -d '"' -f23 | sed 's/://g' | sed 's/}//g')
 				R5=$(echo $SUM | grep -A6 "RANKED_SOLO")
 				RANK5=$(echo $R5 | cut -d ':' -f4 | sed 's/ rank//g')
@@ -29,6 +30,12 @@ if [ $# = 1 ]
 				RANKFLEXLP=$(echo $FLEX | cut -d ':' -f8 | sed 's/,wins//g')
 				RANKFLEXWIN=$(echo $FLEX | cut -d ':' -f9 | sed 's/,losses//g')
 				RANKFLEXLOS=$(echo $FLEX | cut -d ':' -f10 | sed 's/,veteran//g')
+				TT=$(echo $SUM | grep -A6 "RANKED_FLEX_TT")
+				RANKTT=$(echo $TT | cut -d ':' -f4 | sed 's/ rank//g')
+				RANKTTDIV=$(echo $TT | cut -d ':' -f5 | sed 's/ summonerId//g')
+				RANKTTLP=$(echo $TT | cut -d ':' -f8 | sed 's/,wins//g')
+				RANKTTWIN=$(echo $TT | cut -d ':' -f9 | sed 's/,losses//g')
+				RANKTTLOS=$(echo $TT | cut -d ':' -f10 | sed 's/,veteran//g')
 				CHAMPLIST=$(curl -s http://ddragon.leagueoflegends.com/cdn/9.3.1/data/en_US/champion.json | sed 's/,/\\n/g')
 				echo "Summoner Level: $SUMLVL" | fmt -c -w $COLUMNS
 				echo "----"| fmt -c -w $COLUMNS
@@ -42,13 +49,21 @@ if [ $# = 1 ]
 				fi
 				if [ "$FLEX" = "" ]
 					then
-						echo "$1 does not have a rank in Flex" | fmt -c -w $COLUMNS
+						echo "$1 does not have a rank in Flex 5v5" | fmt -c -w $COLUMNS
 						echo "----"| fmt -c -w $COLUMNS
 					else
 						echo "Ranked Flex 5v5:\n\n$1 is $RANKFLEX $RANKFLEXDIV and has $RANKFLEXLP LP with $RANKFLEXWIN wins and $RANKFLEXLOS losses" | fmt -c -w $COLUMNS
 						echo "----"| fmt -c -w $COLUMNS
 				fi
-				GAMEINFO=$(curl -s https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/$ID?api_key=RGAPI-0b007de9-e52b-469a-906e-92c15bd3a200)
+				if [ "$TT" = "" ]
+					then
+						echo "$1 does not have a rank in Flex 3v3" | fmt -c -w $COLUMNS
+						echo "----"| fmt -c -w $COLUMNS
+					else
+						echo "Ranked Flex 3v3:\n\n$1 is $RANKTT $RANKTTDIV and has $RANKTTLP LP with $RANKTTWIN wins and $RANKTTLOS losses" | fmt -c -w $COLUMNS
+						echo "----"| fmt -c -w $COLUMNS
+				fi
+				GAMEINFO=$(curl -s https://euw1.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/$ID?api_key=$API_KEY)
 				VERIF=$(echo $GAMEINFO | cut -d '"' -f4)
 				if [ "$VERIF" = "message" ]
 					then
@@ -77,18 +92,65 @@ if [ $# = 1 ]
 				echo "----" | fmt -c -w $COLUMNS
 				echo "Match History" | fmt -c -w $COLUMNS
 				echo "----" | fmt -c -w $COLUMNS
-				x=3
+				x=1
+				y=1
+				z=6
+				i=1
+				j=4
 				nbrgames=0
-				GAMES=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/$ACCID?api_key=RGAPI-0b007de9-e52b-469a-906e-92c15bd3a200 | sed 's/,/\\n/g')
-				GAMESID=$(echo $GAMES | grep "gameId")
-				while [ $nbrgames -ne 5 ]
+				HISTORY=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/$ACCID?api_key=$API_KEY | sed 's/",/\\n/g' | sed 's/"//g')
+				echo $MATCH_ID
+				while [ $nbrgames -ne 3 ]
 					do
-						GAMEIDID=$(echo $GAMESID | cut -d '"' -f$x | sed 's/://g')
-						echo $GAMEIDID
-						GAMEINFOS=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matches/$GAMEIDID?api_key=RGAPI-0b007de9-e52b-469a-906e-92c15bd3a200)
-						echo $GAMEINFOS
-						x=$(($x + 2))
+						GAME_ID=$(echo $HISTORY | grep "gameId" | sed -n $x'p' | cut -d ":" -f 2 | cut -d "," -f 1)
+						GAME_INFOS=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matches/$GAME_ID?api_key=$API_KEY | sed 's/,/\\n/g' | sed 's/"//g')
+						GAME_MAP=$(echo $GAME_INFOS | grep 'mapId' | cut -d ':' -f2)
+						WIN_LOSE=$(echo $GAME_INFOS | grep 'win' | sed -n '1p' | cut -d ':' -f2)
+						if [ "$WIN_LOSE" = "Win" ]
+							then
+								echo "\nGAME $x\n--\nBLUE TEAM WON\n" | fmt -c -w $COLUMNS
+								echo "-BLUE TEAM-	        		 -RED TEAM-\n" | fmt -c -w $COLUMNS
+							else
+								echo "\nGAME $x\n--\nRED TEAM WON\n" | fmt -c -w $COLUMNS
+								echo "-BLUE TEAM-	        		 -RED TEAM-\n" | fmt -c -w $COLUMNS
+						fi
+						if [ $GAME_MAP = 10 ]
+							then
+								while [ $i -ne 4 ]
+									do
+										BLUE_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $i'p')
+										RED_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $j'p')
+										if [ $i = 2 ]
+											then
+												printf "%-20s       vs       %20s\n" "$BLUE_SUM" "$RED_SUM" | fmt -c -w $COLUMNS
+											else
+												printf "%-20s                %20s\n" "$BLUE_SUM" "$RED_SUM" | fmt -c -w $COLUMNS
+										fi
+										i=$(($i + 1))
+										j=$(($j + 1))
+								done
+							else
+								while [ $y -ne 6 ]
+									do
+										BLUE_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $y'p')
+										RED_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $z'p')
+										if [ $y = 3 ]
+											then
+												printf "%-20s       vs       %20s\n" "$BLUE_SUM" "$RED_SUM" | fmt -c -w $COLUMNS
+											else
+												printf "%-20s                %20s\n" "$BLUE_SUM" "$RED_SUM" | fmt -c -w $COLUMNS
+										fi
+										y=$(($y + 1))
+										z=$(($z + 1))
+								done
+						fi
+						echo "\n-----------------\n" | fmt -c -w $COLUMNS
+						x=$(($x + 1))
 						nbrgames=$(($nbrgames + 1))
+						y=1
+						z=6
+						i=1
+						j=4
 				done
 		fi
 	else
