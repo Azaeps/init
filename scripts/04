@@ -3,7 +3,7 @@ red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
 COLUMNS=$(tput cols)
-API_KEY="RGAPI-b14e72eb-47ab-4f34-b311-4495569c0398"
+API_KEY="RGAPI-4de65f77-376c-4a8b-9c4d-2ba7c1917c2b"
 if [ $# = 1 ]
 	then
 		NAME=$(echo $1 | sed 's/ /%20/g')
@@ -92,65 +92,85 @@ if [ $# = 1 ]
 				echo "----" | fmt -c -w $COLUMNS
 				echo "Match History" | fmt -c -w $COLUMNS
 				echo "----" | fmt -c -w $COLUMNS
-				x=1
-				y=1
-				z=6
-				i=1
-				j=4
 				nbrgames=0
+				x=1
 				HISTORY=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/$ACCID?api_key=$API_KEY | sed 's/",/\\n/g' | sed 's/"//g')
-				echo $MATCH_ID
-				while [ $nbrgames -ne 3 ]
+				while [ $nbrgames -ne 16 ]
 					do
+						i=1
+						j=4
+						k=6
 						GAME_ID=$(echo $HISTORY | grep "gameId" | sed -n $x'p' | cut -d ":" -f 2 | cut -d "," -f 1)
+						echo $GAME_ID
 						GAME_INFOS=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matches/$GAME_ID?api_key=$API_KEY | sed 's/,/\\n/g' | sed 's/"//g')
 						GAME_MAP=$(echo $GAME_INFOS | grep 'mapId' | cut -d ':' -f2)
 						WIN_LOSE=$(echo $GAME_INFOS | grep 'win' | sed -n '1p' | cut -d ':' -f2)
 						if [ "$WIN_LOSE" = "Win" ]
 							then
 								echo "\nGAME $x\n--\nBLUE TEAM WON\n" | fmt -c -w $COLUMNS
-								echo "-BLUE TEAM-	        		 -RED TEAM-\n" | fmt -c -w $COLUMNS
+								echo "- BLUE TEAM -	        		 - RED TEAM -\n" | fmt -c -w $COLUMNS
 							else
 								echo "\nGAME $x\n--\nRED TEAM WON\n" | fmt -c -w $COLUMNS
-								echo "-BLUE TEAM-	        		 -RED TEAM-\n" | fmt -c -w $COLUMNS
+								echo "- BLUE TEAM -	        		 - RED TEAM -\n" | fmt -c -w $COLUMNS
 						fi
-						if [ $GAME_MAP = 10 ]
+						RANKNOR=$(echo $GAME_INFOS | grep 'bans' | cut -d ':' -f2)
+						if [ "$GAME_MAP" = "10" ]
 							then
-								while [ $i -ne 4 ]
+								until test $i -eq 4
 									do
 										BLUE_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $i'p')
+										BLUE_CHAMP_ID=$(echo $GAME_INFOS | grep -A2 "participantId" | grep "championId" | cut -d ':' -f2 | sed -n $i'p')
+										BLUE_CHAMP=$(echo $CHAMPLIST | grep -A2 ":\"$BLUE_CHAMP_ID\"" | grep 'name' | cut -d ':' -f2 | sed 's/"//g')
+										if [ "$BLUE_CHAMP_ID" = "350" ]
+											then
+												BLUE_CHAMP="Yuumi"
+										fi
 										RED_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $j'p')
+										RED_CHAMP_ID=$(echo $GAME_INFOS | grep -A2 "participantId" | grep "championId" | cut -d ':' -f2 | sed -n $j'p')
+										RED_CHAMP=$(echo $CHAMPLIST | grep -A2 ":\"$RED_CHAMP_ID\"" | grep 'name' | cut -d ':' -f2 | sed 's/"//g')
+										if [ "$RED_CHAMP_ID" = "350" ]
+											then
+												RED_CHAMP="Yuumi"
+										fi
 										if [ $i = 2 ]
 											then
-												printf "%-20s       vs       %20s\n" "$BLUE_SUM" "$RED_SUM" | fmt -c -w $COLUMNS
+												printf "%-16s | %-12s vs %12s | %16s\n" "$BLUE_SUM" "$BLUE_CHAMP" "$RED_CHAMP" "$RED_SUM" | fmt -c -w $COLUMNS
 											else
-												printf "%-20s                %20s\n" "$BLUE_SUM" "$RED_SUM" | fmt -c -w $COLUMNS
+												printf "%-16s | %-12s   %12s | %16s\n" "$BLUE_SUM" "$BLUE_CHAMP" "$RED_CHAMP" "$RED_SUM" | fmt -c -w $COLUMNS
 										fi
 										i=$(($i + 1))
 										j=$(($j + 1))
 								done
 							else
-								while [ $y -ne 6 ]
+								until test $i -eq 6
 									do
-										BLUE_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $y'p')
-										RED_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $z'p')
-										if [ $y = 3 ]
+										BLUE_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $i'p')
+										BLUE_CHAMP_ID=$(echo $GAME_INFOS | grep -A2 "participantId" | grep "championId" | cut -d ':' -f2 | sed -n $i'p')
+										BLUE_CHAMP=$(echo $CHAMPLIST | grep -A2 ":\"$BLUE_CHAMP_ID\"" | grep 'name' | cut -d ':' -f2 | sed 's/"//g')
+										if [ "$BLUE_CHAMP_ID" = "350" ]
 											then
-												printf "%-20s       vs       %20s\n" "$BLUE_SUM" "$RED_SUM" | fmt -c -w $COLUMNS
-											else
-												printf "%-20s                %20s\n" "$BLUE_SUM" "$RED_SUM" | fmt -c -w $COLUMNS
+												BLUE_CHAMP="Yuumi"
 										fi
-										y=$(($y + 1))
-										z=$(($z + 1))
+										RED_SUM=$(echo $GAME_INFOS | grep "summonerName" | cut -d ':' -f2 | sed -n $k'p')
+										RED_CHAMP_ID=$(echo $GAME_INFOS | grep -A2 "participantId" | grep "championId" | cut -d ':' -f2 | sed -n $k'p')
+										RED_CHAMP=$(echo $CHAMPLIST | grep -A2 ":\"$RED_CHAMP_ID\"" | grep 'name' | cut -d ':' -f2 | sed 's/"//g')
+										if [ "$RED_CHAMP_ID" = "350" ]
+											then
+												RED_CHAMP="Yuumi"
+										fi
+										if [ $i = 3 ]
+											then
+												printf "%-16s | %-12s vs %12s | %16s\n" "$BLUE_SUM" "$BLUE_CHAMP" "$RED_CHAMP" "$RED_SUM" | fmt -c -w $COLUMNS
+											else
+												printf "%-16s | %-12s    %12s | %16s\n" "$BLUE_SUM" "$BLUE_CHAMP" "$RED_CHAMP" "$RED_SUM" | fmt -c -w $COLUMNS
+										fi
+										i=$(($i + 1))
+										k=$(($k + 1))
 								done
 						fi
 						echo "\n-----------------\n" | fmt -c -w $COLUMNS
 						x=$(($x + 1))
 						nbrgames=$(($nbrgames + 1))
-						y=1
-						z=6
-						i=1
-						j=4
 				done
 		fi
 	else
