@@ -3,7 +3,7 @@ red=`tput setaf 1`
 green=`tput setaf 2`
 reset=`tput sgr0`
 COLUMNS=$(tput cols)
-API_KEY="RGAPI-4de65f77-376c-4a8b-9c4d-2ba7c1917c2b"
+API_KEY="RGAPI-c9e016b3-f770-4b69-96af-903cee883677"
 if [ $# = 1 ]
 	then
 		NAME=$(echo $1 | sed 's/ /%20/g')
@@ -95,13 +95,12 @@ if [ $# = 1 ]
 				nbrgames=0
 				x=1
 				HISTORY=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matchlists/by-account/$ACCID?api_key=$API_KEY | sed 's/",/\\n/g' | sed 's/"//g')
-				while [ $nbrgames -ne 16 ]
+				while [ $nbrgames -ne 6 ]
 					do
 						i=1
 						j=4
 						k=6
 						GAME_ID=$(echo $HISTORY | grep "gameId" | sed -n $x'p' | cut -d ":" -f 2 | cut -d "," -f 1)
-						echo $GAME_ID
 						GAME_INFOS=$(curl -s https://euw1.api.riotgames.com/lol/match/v4/matches/$GAME_ID?api_key=$API_KEY | sed 's/,/\\n/g' | sed 's/"//g')
 						GAME_MAP=$(echo $GAME_INFOS | grep 'mapId' | cut -d ':' -f2)
 						WIN_LOSE=$(echo $GAME_INFOS | grep 'win' | sed -n '1p' | cut -d ':' -f2)
